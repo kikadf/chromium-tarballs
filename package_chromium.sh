@@ -241,7 +241,7 @@ export_tarballs() {
 			--test-data \
 			"chromium-${version}" \
 			--src-dir src/
-		mv "chromium-${version}.tar.xz" "out/chromium-${version}-pkgsrc-testdata.tar.xz" ||
+		mv "chromium-${version}.tar.xz" "out/chromium-${version}-${TARBALL_SUFX}-testdata.tar.xz" ||
 			die "Failed to move test-data tarball"
 
 		clog "Exporting full source tarball"
@@ -251,7 +251,7 @@ export_tarballs() {
 			--remove-nonessential-files \
 			"chromium-${version}" \
 			--src-dir src/
-		mv "chromium-${version}.tar.xz" "out/chromium-${version}-pkgsrc-full.tar.xz" ||
+		mv "chromium-${version}.tar.xz" "out/chromium-${version}-${TARBALL_SUFX}-full.tar.xz" ||
 			die "Failed to move full tarball"
 	fi
 
@@ -262,7 +262,7 @@ export_tarballs() {
 		--remove-nonessential-files \
 		"chromium-${version}" \
 		--src-dir src-lite/
-	mv "chromium-${version}.tar.xz" "out/chromium-${version}-pkgsrc.tar.xz" ||
+	mv "chromium-${version}.tar.xz" "out/chromium-${version}-${TARBALL_SUFX}.tar.xz" ||
 		die "Failed to move lite tarball"
 
 	clog "Generating hashes"
@@ -302,7 +302,12 @@ pkgsrc_patches() {
         clog "Apply pkgsrc patches"
         local pkgsrc_patch="${base}/kaiju/patches/chromium${version%%.*}/nb.patch"
         pushd "src" &> /dev/null || die "Failed to enter src directory"
-        patch -Np1 -s -i "${pkgsrc_patch}" || die "Failed to apply pkgsrc patchset"
+        if patch -Np1 -s --dry-run -i "${pkgsrc_patch}"; then
+			patch -Np1 -s -i "${pkgsrc_patch}"
+		else
+			cerror "Failed to apply pkgsrc patchset, fallback to vanilla"
+			TARBALL_SUFX=vanilla
+		fi
         popd &> /dev/null || die "Failed to exit kaiju directory"
 }
 
@@ -372,6 +377,8 @@ if [ "_${GENERATE_ALL:-}" = _true ]; then
 else
 	GENERATE_ALL=false
 fi
+
+TARBALL_SUFX=pkgsrc
 
 export TZ=PST8PDT
 

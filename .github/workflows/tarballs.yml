@@ -45,7 +45,7 @@ jobs:
       - name: Configure Git
         run: |
           git config --global user.name "Chromium Bot"
-          git config --global user.email "chromium@gentoo.org"
+          git config --global user.email "kikadf.01@gmail.com"
           git config --global advice.detachedHead false
 
       - name: Get release info
@@ -76,28 +76,6 @@ jobs:
             path: out/chromium*.tar.xz*
             compression-level: 0 # Tarballs are already compressed
             retention-days: 5
-
-      # Using pinned commit hash for IRC action as preferred for security/stability.
-      - name: Notify success (Generation)
-        if: success() && github.repository == 'chromium-linux-tarballs/chromium-tarballs'
-        continue-on-error: true
-        uses: Gottox/irc-message-action@5ab60c2121053c99a383753390fb169a0045694d # v2.1.5
-        with:
-          server: irc.libera.chat
-          notice: false
-          channel: "#gentoo-chromium"
-          nickname: chromium-notifs
-          message: "✅ Successfully generated Chromium tarballs for ${{ inputs.version || github.ref_name }} (${{ steps.get_release_info.outputs.channel }})"
-
-      - name: Notify failure (Generation)
-        if: (failure() || cancelled()) && github.repository == 'chromium-linux-tarballs/chromium-tarballs'
-        uses: Gottox/irc-message-action@5ab60c2121053c99a383753390fb169a0045694d # v2.1.5
-        with:
-          server: irc.libera.chat
-          notice: false
-          channel: "#gentoo-chromium"
-          nickname: chromium-notifs
-          message: "❌ Failed to generate Chromium tarballs for ${{ inputs.version || github.ref_name }} (${{ steps.get_release_info.outputs.channel }})"
 
   # Create GitHub Release and upload artefacts directly to it.
   create-release:
@@ -130,23 +108,3 @@ jobs:
           name: ${{ needs.generate-tarball.outputs.annotation }}
           body: |
             **Artefacts are attached directly to this GitHub release.**
-      - name: Notify success (Release)
-        if: success() && github.repository == 'chromium-linux-tarballs/chromium-tarballs'
-        continue-on-error: true
-        uses: Gottox/irc-message-action@5ab60c2121053c99a383753390fb169a0045694d # v2.1.5
-        with:
-          server: irc.libera.chat
-          notice: false
-          channel: "#gentoo-chromium"
-          nickname: chromium-notifs
-          message: "✅ Successfully created GH release for Chromium tarballs @ ${{ inputs.version || github.ref_name }} ${{ needs.generate-tarball.outputs.channel && format('({0})', needs.generate-tarball.outputs.channel)}}"
-
-      - name: Notify failure (Release)
-        if: (failure() || cancelled()) && github.repository == 'chromium-linux-tarballs/chromium-tarballs'
-        uses: Gottox/irc-message-action@5ab60c2121053c99a383753390fb169a0045694d # v2.1.5
-        with:
-          server: irc.libera.chat
-          notice: false
-          channel: "#gentoo-chromium"
-          nickname: chromium-notifs
-          message: "❌ Failed to create (or update) GH release for Chromium tarballs @ ${{ inputs.version || github.ref_name }} ${{ needs.generate-tarball.outputs.channel && format('({0})', needs.generate-tarball.outputs.channel)}}"

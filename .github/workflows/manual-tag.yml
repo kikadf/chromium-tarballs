@@ -136,7 +136,7 @@ jobs:
       - name: Configure Git
         run: |
           git config --global user.name "Chromium Bot"
-          git config --global user.email "chromium@gentoo.org"
+          git config --global user.email "kikadf.01@gmail.com"
 
       - name: Create tag
         id: create_tag
@@ -158,14 +158,3 @@ jobs:
             echo "tag_created=true" >> $GITHUB_OUTPUT
             echo "Successfully created and pushed tag: $VERSION"
           fi
-
-      - name: Update IRC
-        uses: Gottox/irc-message-action@5ab60c2121053c99a383753390fb169a0045694d # v2.1.5
-        if: steps.create_tag.outputs.tag_created == 'true' && github.repository == 'chromium-linux-tarballs/chromium-tarballs'
-        continue-on-error: true
-        with:
-          server: irc.libera.chat
-          notice: false
-          channel: "#gentoo-chromium"
-          nickname: chromium-notifs
-          message: "🏷️ Manual release: ${{ steps.validate_tag.outputs.version_string }}"

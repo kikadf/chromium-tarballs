@@ -241,7 +241,7 @@ export_tarballs() {
 			--test-data \
 			"chromium-${version}" \
 			--src-dir src/
-		mv "chromium-${version}.tar.xz" "out/chromium-${version}-linux-testdata.tar.xz" ||
+		mv "chromium-${version}.tar.xz" "out/chromium-${version}-pkgsrc-testdata.tar.xz" ||
 			die "Failed to move test-data tarball"
 
 		clog "Exporting full source tarball"
@@ -251,7 +251,7 @@ export_tarballs() {
 			--remove-nonessential-files \
 			"chromium-${version}" \
 			--src-dir src/
-		mv "chromium-${version}.tar.xz" "out/chromium-${version}-linux-full.tar.xz" ||
+		mv "chromium-${version}.tar.xz" "out/chromium-${version}-pkgsrc-full.tar.xz" ||
 			die "Failed to move full tarball"
 	fi
 
@@ -262,7 +262,7 @@ export_tarballs() {
 		--remove-nonessential-files \
 		"chromium-${version}" \
 		--src-dir src-lite/
-	mv "chromium-${version}.tar.xz" "out/chromium-${version}-linux.tar.xz" ||
+	mv "chromium-${version}.tar.xz" "out/chromium-${version}-pkgsrc.tar.xz" ||
 		die "Failed to move lite tarball"
 
 	clog "Generating hashes"
@@ -276,6 +276,34 @@ export_tarballs() {
 		cat "${tarball}.hashes"; echo
 	done
 	popd &> /dev/null || die "Failed to exit out directory"
+}
+
+pkgsrc_patches() {
+        local version="${1}"
+        if [ -z "${version}" ]; then
+                die "${FUNCNAME}: No version specified"
+        fi
+
+        clog "Get kaiju repo for pkgsrc patches"
+        if [[ -d "kaiju" ]]; then
+                pushd "kaiju" &> /dev/null || die "Failed to enter kaiju directory"
+                if [ "$(git symbolic-ref --short -q HEAD)" = "" ]; then
+                        clog "Currently in a detached HEAD state, switching to main branch"
+                        git switch main || die "Failed to switch to main branch in kaiju repository"
+                fi
+                git pull || die "Failed to pull latest changes in kaiju repository"
+                popd &> /dev/null || die "Failed to exit kaiju directory"
+        else
+                clog "Cloning kaiju repository"
+                git clone -q --depth=1 "https://github.com/kikadf/kaiju.git" ||
+                        die "Failed to clone kaiju repository"
+        fi
+
+        clog "Apply pkgsrc patches"
+        local pkgsrc_patch="${base}/kaiju/chromium${version%%.*}/nb.patch"
+        pushd "src" &> /dev/null || die "Failed to enter src directory"
+        patch -Np1 -s -i "${pkgsrc_patch}" || die "Failed to apply pkgsrc patchset"
+        popd &> /dev/null || die "Failed to exit kaiju directory"
 }
 
 main() {
@@ -314,6 +342,8 @@ main() {
 	clog "Un-patching upstream source scripts"
 	patch -p1 -R --no-backup-if-mismatch < "${base}/tweak-src.patch" ||
 		die "Failed to un-patch upstream source scripts"
+
+	pkgsrc_patches "${version}"
 
 	prune_lite_excluded_dirs
 	export_tarballs "${version}"

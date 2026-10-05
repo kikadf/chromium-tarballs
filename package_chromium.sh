@@ -303,11 +303,12 @@ pkgsrc_patches() {
         local pkgsrc_patch="${base}/kaiju/patches/chromium${version%%.*}/nb.patch"
         pushd "src" &> /dev/null || die "Failed to enter src directory"
         if patch -Np1 -s --dry-run -i "${pkgsrc_patch}"; then
-			patch -Np1 -s -i "${pkgsrc_patch}"
-		else
-			cerror "Failed to apply pkgsrc patchset, fallback to vanilla"
-			TARBALL_SUFX=vanilla
-		fi
+		patch -Np1 -s -i "${pkgsrc_patch}"
+		cp "${pkgsrc_patch}" .
+	else
+		cerror "Failed to apply pkgsrc patchset, fallback to vanilla"
+		TARBALL_SUFX=vanilla
+	fi
         popd &> /dev/null || die "Failed to exit kaiju directory"
 }
 

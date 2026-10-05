@@ -279,37 +279,37 @@ export_tarballs() {
 }
 
 pkgsrc_patches() {
-        local version="${1}"
-        if [ -z "${version}" ]; then
-                die "${FUNCNAME}: No version specified"
-        fi
+	local version="${1}"
+	if [ -z "${version}" ]; then
+		die "${FUNCNAME}: No version specified"
+	fi
 
-        clog "Get kaiju repo for pkgsrc patches"
-        if [[ -d "kaiju" ]]; then
-                pushd "kaiju" &> /dev/null || die "Failed to enter kaiju directory"
-                if [ "$(git symbolic-ref --short -q HEAD)" = "" ]; then
-                        clog "Currently in a detached HEAD state, switching to main branch"
-                        git switch main || die "Failed to switch to main branch in kaiju repository"
-                fi
-                git pull || die "Failed to pull latest changes in kaiju repository"
-                popd &> /dev/null || die "Failed to exit kaiju directory"
-        else
-                clog "Cloning kaiju repository"
-                git clone -q --depth=1 "https://github.com/kikadf/kaiju.git" ||
-                        die "Failed to clone kaiju repository"
-        fi
+	clog "Get kaiju repo for pkgsrc patches"
+	if [[ -d "kaiju" ]]; then
+		pushd "kaiju" &> /dev/null || die "Failed to enter kaiju directory"
+		if [ "$(git symbolic-ref --short -q HEAD)" = "" ]; then
+			clog "Currently in a detached HEAD state, switching to main branch"
+			git switch main || die "Failed to switch to main branch in kaiju repository"
+		fi
+		git pull || die "Failed to pull latest changes in kaiju repository"
+		popd &> /dev/null || die "Failed to exit kaiju directory"
+	else
+		clog "Cloning kaiju repository"
+		git clone -q --depth=1 "https://github.com/kikadf/kaiju.git" ||
+			die "Failed to clone kaiju repository"
+	fi
 
-        clog "Apply pkgsrc patches"
-        local pkgsrc_patch="${base}/kaiju/patches/chromium${version%%.*}/pkgsrc.patch"
-        pushd "src" &> /dev/null || die "Failed to enter src directory"
-        if patch -Np1 -s --dry-run -i "${pkgsrc_patch}"; then
+	clog "Apply pkgsrc patches"
+	local pkgsrc_patch="${base}/kaiju/patches/chromium${version%%.*}/pkgsrc.patch"
+	pushd "src" &> /dev/null || die "Failed to enter src directory"
+	if patch -Np1 -s --dry-run -i "${pkgsrc_patch}"; then
 		patch -Np1 -s -i "${pkgsrc_patch}"
 		cp "${pkgsrc_patch}" .
 	else
 		cerror "Failed to apply pkgsrc patchset, fallback to vanilla"
 		TARBALL_SUFX=vanilla
 	fi
-        popd &> /dev/null || die "Failed to exit kaiju directory"
+	popd &> /dev/null || die "Failed to exit kaiju directory"
 }
 
 main() {

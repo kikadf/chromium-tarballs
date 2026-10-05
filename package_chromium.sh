@@ -300,7 +300,7 @@ pkgsrc_patches() {
         fi
 
         clog "Apply pkgsrc patches"
-        local pkgsrc_patch="${base}/kaiju/patches/chromium${version%%.*}/nb.patch"
+        local pkgsrc_patch="${base}/kaiju/patches/chromium${version%%.*}/pkgsrc.patch"
         pushd "src" &> /dev/null || die "Failed to enter src directory"
         if patch -Np1 -s --dry-run -i "${pkgsrc_patch}"; then
 		patch -Np1 -s -i "${pkgsrc_patch}"
